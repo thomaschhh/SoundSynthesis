@@ -1,0 +1,13 @@
+Hi Thomas,
+
+es können jetzt per Python und osc4py3 OSC-Nachrichten an Faust versendet werden.
+
+Das dazugehörige Script findest du unter /Code/Python/. Ein kurzes Video ist unter /Dokumentation/ zu finden.
+
+In dem Py-Script werden anfangs Zufallsdaten in Form einer Matrix generiert. Die Spalten stehen für die 16 Bundesländer, die Reihen für die Parameter der Klangsynthese. Die z-Ebene steht für die Zeit, also ein Array ist eine Zeiteinheit (Tag/Monat/Woche etc.). Die Faust-GUI ist identisch mit dem Array-Format: Es gibt 16 Sinus-Töne, die übereinander gelegt werden. Jeder Sinus-Ton hat steuerbare Parameter (Frequenz, Amplitude, Gate) und eine Amplituden-Hüllkurve mit attack und release. Das wiederholt sich in der vertikalen ... wie ein großer Mixer mit 16 channels.  
+
+Das Python-Script schreibt automatisch die OSC-Addressen und Messages. Dafür muss am Anfang die Struktur des Faust-Programms eingepflegt werden, also Name des Synths ("BASIS"), horizontale und vertikale Gruppen-Namen ("SINUS" und "BL" für Bundesländer) und Parameter-Namen ("freq", "gain", "attack", etc.). Und die OSC-Port-Nr nicht vergessen. Das Script geht dann nach und nach die einzelnen Arrays/Zeiteinheiten durch. Dazwischen kommt der sleep-Befehl, sodass die Töne ein- und ausklingen können.
+
+Der Code ist jetzt schon durch den Hüllkurven-Generator ein wenig erweitert. Für den müssen die Gates der Sinus-Töne nach jeder Zeiteinheit wieder auf 0 gesetzt werden. Das Script ist kommentiert. 
+
+
