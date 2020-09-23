@@ -7,6 +7,7 @@ def edit(dfr):
     total_before_edit = 0  # just for the sake of information, optional
     total_after_edit = 0  # just for the sake of information, optional
 
+    dfr.replace({'Bundesland': {'ä': 'ae', 'ö': 'oe', 'ü': 'ue'}}, regex=True, inplace=True)  # replace special characters
     dfr['Meldedatum'] = pd.to_datetime(dfr['Meldedatum'])  # transform Meldedatum into datetime format
     idx = pd.date_range(min(dfr.Meldedatum), max(dfr.Meldedatum))  # create a new index, earliest to most current date
 
