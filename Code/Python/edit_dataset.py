@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def edit(dfr):
+def edit(dfr, pth):
     """Edit every single state"""
     total_before_edit = 0  # just for the sake of information, optional
     total_after_edit = 0  # just for the sake of information, optional
@@ -82,7 +82,7 @@ def edit(dfr):
         df_new.drop(columns=['Meldedatum'], axis=1, inplace=True)
 
         '''Write a new csv file'''
-        df_new.to_csv(f'{states}.csv')
+        df_new.to_csv(f'{path}/{states}.csv')
 
     print('----> total_before_edit rows before editing ', total_before_edit)
     print('----> total_after_edit rows before editing ', total_after_edit)
@@ -92,5 +92,6 @@ def edit(dfr):
 
 if __name__ == '__main__':
     '''Read the csv file'''
-    df = pd.read_csv('/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/RKI_COVID19.csv')  # your path
-    edit(df)
+    path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis/CSV'
+    df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
+    edit(df, path)
