@@ -91,7 +91,7 @@ def edit(dfr, pth):
         df_new.drop(columns=['Meldedatum'], axis=1, inplace=True)
 
         '''Write a new csv file'''
-        df_new.to_csv(f'{path}/{states}.csv')
+        df_new.to_csv(f'{pth}/{states}.csv')
 
         # Eingriff
         bl.append(states)
@@ -121,10 +121,10 @@ def edit(dfr, pth):
 
 if __name__ == '__main__':
     '''Read the csv file'''
-    # path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis/CSV'
-    path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
+    path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis/CSV'
+    # path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
     df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
-    data, params, bl = edit(df, path)
+    data, params, bl, index = edit(df, path)
 
     print(data[:, 15, 35])
 
