@@ -5,16 +5,21 @@ from osc4py3.as_eventloop import *
 
 import numpy as np
 import time
+import pandas as pd
 
-### Beispiel-Daten generieren
+from edit_dataset import edit
+
+sleepTime = 1  # in seconds
+
+'''Beispiel-Daten generieren
 # Struktur Vorschlag:
 # 1.D = Orte
 # 2.D = Parameter
 # 3.D = Zeit
-freqMin = 100
+freqMin = 60
 freqMax = 500
-sleepTime = 9 # in Sekunden
-anzTage = 7
+sleepTime = 9  # in Sekunden
+anzTage = 10
 
 data = np.random.uniform(freqMin, freqMax, size=(5, 16, anzTage))  # Zeile 0: freq, 1: gain, 2: gate;
 data[1, :] = data[1, :] / freqMax
@@ -23,10 +28,35 @@ for i in range(data.shape[1]):
         data[2, i, j] = np.random.choice([0, 1])
 data[3, :] = data[3, :] / freqMax * 3
 data[4, :] = data[4, :] / freqMax * 6
-print(data)
+# print(data)
+'''
+
+'''read data with function "edit"'''
+path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
+df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
+data, params, bl, idx = edit(df, path)
 
 
-### Faust-Parameter
+'''adjust data for current FAUST-program'''
+'''parameter: 
+    'AnzahlFall', 'AnzahlGenesen', 'AnzahlTodesfall', 'Female', 'Unknown',
+    'Male', 'A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+',
+    'A_unknown']
+   states:
+    ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 
+    'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 
+    'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thueringen']'''
+data = data[:2, :, :]
+freqVal = [60, 300]
+gainVal = [0, 1]
+
+data[0, :] = data[0, :]/data[0, :].max()
+
+# data[1, :] = data[1, :]/data[1, :].max() * freqVal[1]
+for i in range(data.shape[2]):
+    data[1, :, i] = np.array([60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210])
+
+'''FAUST-Parameter'''
 # OSC-Port
 port = 5510
 # Synth-Name
@@ -34,12 +64,14 @@ synthName = "BASIS"
 # Titel der h-Groups
 hgroups = ["SINUS", "volume"]
 # Parameter
-params = ["freq", "gain", "gate", "attack", "release"] # Reihenfolge muss mit der im Datensatz
+# params = ["freq", "gain", "gate", "attack", "release"]  # Reihenfolge muss mit der im Datensatz übereinstimmen
+# params = ["gain", "freq", "gate", "attack", "release"]
+params = ["gain", "freq"]
 # Titel der v-Groups
 vgroups = ["BL"]
 
 
-### Schreiben der OSC-Messages
+'''Schreiben der OSC-Messages'''
 oscAddress = "/" + synthName + "/" + hgroups[0] + "/" + vgroups[0]
 
 # Start the OSC-system.
@@ -57,13 +89,16 @@ for l in range(data.shape[2]):
         jj = 0
         for i in range(data.shape[1]):
             # msgList[j] = oscbuildparse.OSCMessage(oscAddress[k] + params[k] + str(jj), None, [float(data[k, i, l])])
-            msgList[j] = oscbuildparse.OSCMessage(oscAddress + str(jj) + "/" + params[k], None, [float(data[k, i, l])])
+            msgList[j] = oscbuildparse.OSCMessage(oscAddress + str(jj) + "/" + params[k],
+                                                  None, [float(data[k, i, l])])
             j += 1
             jj += 1
     bun = oscbuildparse.OSCBundle(oscbuildparse.OSC_IMMEDIATELY, msgList)
     osc_send(bun, "TEST")
     osc_process()
-    print("Tag" + str(l))
+    # print("Tag" + str(l))
+    print(idx[l])
+    print(data[0, :, l])
     time.sleep(sleepTime)
 
     # Gate wieder auf 0 setzen, damit Envelope funktioniert
