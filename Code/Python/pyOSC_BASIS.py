@@ -8,6 +8,8 @@ import time
 import pandas as pd
 
 from edit_dataset import edit
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 
 sleepTime = 1  # in seconds
 
@@ -32,7 +34,8 @@ data[4, :] = data[4, :] / freqMax * 6
 '''
 
 '''read data with function "edit"'''
-path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
+path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis/CSV'
+# path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
 df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
 data, params, bl, idx = edit(df, path)
 
@@ -46,6 +49,34 @@ data, params, bl, idx = edit(df, path)
     ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 
     'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 
     'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thueringen']'''
+
+'''Interpolation'''
+numb = 1000
+l_param = ['gain', 'freq']
+for i in range(len(l_param)):
+    y = data[i, 0, :]
+    x = np.linspace(0, y.shape[0], num=numb, endpoint=True)
+
+    f2 = interp1d(x, y, kind='cubic')
+    plt.plot(x, f2(x), '*')
+
+plt.show()
+
+gain = data[0, 0, :]
+y = gain
+x = np.linspace(0, 204, num=205, endpoint=True)
+xnew = np.linspace(0, 204, num=numb, endpoint=True)
+f = interp1d(x, y)
+f2 = interp1d(x, y, kind='cubic')
+
+'''Plotting'''
+fig, axs = plt.subplots(2)
+fig.suptitle('Vertically stacked subplots')
+axs[0].plot(x, y, 'o')
+axs[1].plot(xnew, f2(xnew), '*')
+plt.show()
+
+
 data = data[:2, :, :]
 freqVal = [60, 300]
 gainVal = [0, 1]
