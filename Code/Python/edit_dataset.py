@@ -78,6 +78,10 @@ def edit(dfr, pth):
         df_new.index = pd.DatetimeIndex(df_new.index)
         df_new = df_new.reindex(idx, fill_value=0)
 
+        '''Replace 0s with state name'''
+        filled_state = np.where(df_new['Bundesland'] == 0, f'{states}', f'{states}')
+        df_new['Bundesland'] = filled_state
+
         '''Print number of rows'''
         # print(f'Total rows of {states} after editing: ', df_new['Bundesland'].count(), '\n --------')
         total_before_edit += df_region['Bundesland'].count()
@@ -85,6 +89,9 @@ def edit(dfr, pth):
 
         '''Drop unnecessary columns'''
         df_new.drop(columns=['Meldedatum'], axis=1, inplace=True)
+
+        '''Write a new csv file'''
+        df_new.to_csv(f'{path}/{states}.csv')
 
         # Eingriff
         bl.append(states)
