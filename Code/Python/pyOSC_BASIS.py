@@ -11,9 +11,21 @@ from edit_dataset import edit
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
-sleepTime = 0.1  # in seconds
+numb = 5000  # interpolated resolution
+sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
+CO_offset = 200
 
-'''Beispiel-Daten generieren
+'''Mapping
+
+- AnzahlFall        = Sinus gain
+    Geschlecht      = -
+    Altersgruppe    = -
+- AnzahlGenesen     = -
+- AnzahlTodesfall   = noise Volume + noise LFO freq
+'''
+
+'''Beispiel-Daten generieren'''
+'''
 # Struktur Vorschlag:
 # 1.D = Orte
 # 2.D = Parameter
@@ -39,7 +51,7 @@ path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
 df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
 data, params, bl, idx = edit(df, path)
 
-
+data = data[:, :, 20:]
 
 '''parameter: 
     'AnzahlFall', 'AnzahlGenesen', 'AnzahlTodesfall', 'Female', 'Unknown',
@@ -51,50 +63,40 @@ data, params, bl, idx = edit(df, path)
     'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thueringen']'''
 
 '''Interpolation'''
-
-# l_param = ['gain', 'freq']
-# y = data[0, 0, :]
-# x = np.linspace(0, y.shape[0], num=numb, endpoint=True)
-#
-# f2 = interp1d(x, y, kind='cubic')
-# plt.plot(x, f2(x), '*')
-#
-# plt.show()
-
-# numb = data.shape[2]
-numb = 500
-
 x = np.linspace(0, data.shape[2], num=data.shape[2], endpoint=True)
 xnew = np.linspace(0, data.shape[2], num=numb, endpoint=True)
 
 dataInt = np.zeros([data.shape[0], data.shape[1], numb])
 for j in range(data.shape[0]):
     for i in range(data.shape[1]):
-        y = data[0, i, :]
+        y = data[j, i, :]
         f2 = interp1d(x, y, kind='cubic')
         dataInt[j, i, :] = f2(xnew)
 
-'''Plotting'''
-fig, axs = plt.subplots(2)
-fig.suptitle('Vertically stacked subplots')
-axs[0].plot(x, data[0, 0, :], 'o')
-axs[1].plot(xnew, dataInt[0, 0, :], '*')
-plt.show()
+# # Plotting
+# fig, axs = plt.subplots(2)
+# fig.suptitle('Vertically stacked subplots')
+# axs[0].plot(x, data[2, 0, :], 'o')
+# axs[1].plot(xnew, dataInt[2, 0, :], '*')
+# plt.show()
 
-'''adjust data for current FAUST-program'''
 data = dataInt
 
-data = data[:2, :, :]
+'''adjust data for current FAUST-program'''
+data = data[:3, :, :]
 freqVal = [60, 300]
 gainVal = [0, 1]
 
-data[0, :] = data[0, :]/data[0, :].max()
+data[0, :] = data[0, :]/data[0, :].max()  # Normierung
 
 # data[1, :] = data[1, :]/data[1, :].max() * freqVal[1]
 np.linspace(60, 400, 16)
 for i in range(data.shape[2]):
     # data[1, :, i] = np.array([60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210])
-    data[1, :, i] = np.linspace(60, 250, 16)
+    data[1, :, i] = np.linspace(90, 300, 16)
+
+# data[2, :] = data[2, :]/data[2, :].max()
+
 
 '''FAUST-Parameter'''
 # OSC-Port
@@ -102,37 +104,59 @@ port = 5510
 # Synth-Name
 synthName = "BASIS"
 # Titel der h-Groups
-hgroups = ["SINUS", "volume"]
+hgroups = ["SINUS", "Noise"]
 # Parameter
 # params = ["freq", "gain", "gate", "attack", "release"]  # Reihenfolge muss mit der im Datensatz übereinstimmen
 # params = ["gain", "freq", "gate", "attack", "release"]
-params = ["gain", "freq"]
+# params = ["gain", "freq"]
+params = ["gain", "freq", "noiseLfoFreq"]
+params_num = [1, 1, 0]  # Parameter für jedes BL (1) oder global (0)?
 # Titel der v-Groups
 vgroups = ["BL"]
 
 
 '''Schreiben der OSC-Messages'''
-oscAddress = "/" + synthName + "/" + hgroups[0] + "/" + vgroups[0]
+oscAddress = [''] * len(hgroups)
+oscAddress[0] = "/" + synthName + "/" + hgroups[0] + "/" + vgroups[0]
+oscAddress[1] = "/" + synthName + "/" + hgroups[1]
+
 
 # Start the OSC-system.
 osc_startup()
 osc_udp_client('127.0.0.1', port, "TEST")  # "127.0.0.1" --> IP LocalHost
 
-msgList = [''] * data.shape[1] * data.shape[0]  # leere Liste zum Sammeln der OSC-Messages
+# msgList = [''] * data.shape[1] * data.shape[0]  # leere Liste zum Sammeln der OSC-Messages
+# msgList = []
 
 # 3-fach Schleife:
 # Zuweisung OSC-Addresse + Parameter-Wert
 # Schreiben der OSC-Message
 for l in range(data.shape[2]):
     j = 0
+    msgList = []
     for k in range(data.shape[0]):
         jj = 0
-        for i in range(data.shape[1]):
-            # msgList[j] = oscbuildparse.OSCMessage(oscAddress[k] + params[k] + str(jj), None, [float(data[k, i, l])])
-            msgList[j] = osc4py3.oscbuildparse.OSCMessage(oscAddress + str(jj) + "/" + params[k],
-                                                          None, [float(data[k, i, l])])
-            j += 1
-            jj += 1
+        if params_num[k] == 1:
+            for i in range(data.shape[1]):
+                # msgList[j] = oscbuildparse.OSCMessage(oscAddress[k] + params[k] + str(jj), None, [float(data[k, i, l])])
+                # msgList[j] = osc4py3.oscbuildparse.OSCMessage(oscAddress + str(jj) + "/" + params[k],
+                #                                               None, [float(data[k, i, l])])
+                message = osc4py3.oscbuildparse.OSCMessage(oscAddress[0] + str(jj) + "/" + params[k],
+                                                           None, [float(data[k, i, l])])
+                msgList.append(message)
+                j += 1
+                jj += 1
+        else:  # Mapping Todesfälle auf LFO
+            val = sum(data[k, :, l])/400*10  # LFO-Freq
+            message2 = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + params[2],
+                                                        None, [float(val)])
+            print(message2)
+            msgList.append(message2)
+            val = sum(data[k, :, l])/400*6+2  # LFO-Vol
+            message2 = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + "noiseVol",
+                                                        None, [float(val)])
+            msgList.append(message2)
+
     bun = osc4py3.oscbuildparse.OSCBundle(osc4py3.oscbuildparse.OSC_IMMEDIATELY, msgList)
     osc_send(bun, "TEST")
     osc_process()
@@ -143,12 +167,12 @@ for l in range(data.shape[2]):
     time.sleep(sleepTime)
 
     # Gate wieder auf 0 setzen, damit Envelope funktioniert
-    msgList2 = [''] * data.shape[1]
-    for n in range(data.shape[1]):
-        msgList2[n] = osc4py3.oscbuildparse.OSCMessage(oscAddress + str(n) + "/" + "gate", None, [float(0)])
-    bun = osc4py3.oscbuildparse.OSCBundle(osc4py3.oscbuildparse.OSC_IMMEDIATELY, msgList2)
-    osc_send(bun, "TEST")
-    osc_process()
+    # msgList2 = [''] * data.shape[1]
+    # for n in range(data.shape[1]):
+    #     msgList2[n] = osc4py3.oscbuildparse.OSCMessage(oscAddress + str(n) + "/" + "gate", None, [float(0)])
+    # bun = osc4py3.oscbuildparse.OSCBundle(osc4py3.oscbuildparse.OSC_IMMEDIATELY, msgList2)
+    # osc_send(bun, "TEST")
+    # osc_process()
 print("Ende der Aufzeichnung")
 # osc_terminate()
 
