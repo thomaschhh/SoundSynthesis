@@ -8,7 +8,7 @@ noiseLFO = os.lf_saw(noiseLfoFreq);
 
 
 process = 
-  	(hgroup("SINUS", sum(i, 16, partial(i))) 
+  	(hgroup("SINUS", sum(i, 16, partial(i)))/2
   +  noiseVol * noiseLFO * no.noise : fi.lowpass(6, noiseCO)) 
   //vgroup("Noise",  noiseVol*(os.lf_squarewave(1000)+0.2) * no.noise : fi.lowpass(6, noiseCO))) 
   * noiseGroup(vslider("volume", 0, 0, 1, 0.01)) * 0.4  <:_,_
