@@ -5,13 +5,12 @@ noiseVol = noiseGroup(vslider("noiseVol", 1, 0, 10, 0.001) : si.smoo);
 noiseCO = noiseGroup(vslider("noiseCO", 100, 100, 2000, 0.1) : si.smoo);
 noiseLfoFreq = noiseGroup(vslider("noiseLfoFreq", 0, 0, 1000, 0.01) : si.smoo);
 noiseLFO = os.lf_saw(noiseLfoFreq);
-
+noise = noiseVol * noiseLFO * no.noise : fi.lowpass(6, noiseCO);
+maxLevel = 0.4;
 
 process = 	
 (
-	(hgroup("square", sum(i, 16, partial(i))))/4 
-  	+   (noiseVol * noiseLFO * no.noise : fi.lowpass(6, noiseCO))
- ) 
+	(hgroup("square", par(i, 16, partial(i)))):> /(4), noise :>_) 
   //vgroup("Noise",  noiseVol*(os.lf_squarewave(1000)+0.2) * no.noise : fi.lowpass(6, noiseCO))) 
   * 
 (
