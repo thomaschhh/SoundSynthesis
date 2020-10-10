@@ -167,23 +167,19 @@ osc_process()
 
 # Ebene: Tag
 for t in range(data.shape[2]):
-    tt = 0
     msgList = []  # Liste zum Sammeln der OSC-msg (für jeden Tag neu)
 
     # Ebene: Parameter
     for p in range(data.shape[0]):
-        pp = 0
 
         if params_info[p] == 0:  # Abfrage ob Parameter für jedes BL / über alle BL summiert
 
             # Ebene: Bundesland
             for bl in range(data.shape[1]):
                 # Erzeuge OSC-message für Tag X / Parameter X / BL X
-                message = osc4py3.oscbuildparse.OSCMessage(oscAddress[0] + str(pp) + "/" + params[p],
+                message = osc4py3.oscbuildparse.OSCMessage(oscAddress[0] + str(bl) + "/" + params[p],
                                                            None, [float(data[p, bl, t])])
                 msgList.append(message)
-                tt += 1
-                pp += 1
 
         elif params_info[p] == 1:  # adjustments for 'AnzahlTodesfall' --> noise Volume + noise LFO freq
             val = data[p, 0, t] * (noLfoFreq_val[1] - noLfoFreq_val[0]) + noLfoFreq_val[0]  # Skalentransformation LFO-Freq

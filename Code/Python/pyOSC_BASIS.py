@@ -12,7 +12,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 '''global parameter'''
-ip_YesNo = "yes"  # doing interpolation?
+ip_YesNo = "no"  # doing interpolation?
 ipRes = 1000  # interpolated resolution
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
@@ -61,10 +61,10 @@ if ip_YesNo == "yes":
 
 '''adjust data for current FAUST-program'''
 # scales of sound-synth. parameters
-freq_val = [150, 500]
+freq_val = [150, 300]
 gainVal = [0, 1]
 noLfoFreq_val = [0, 10]
-noVol_val = [1, 6]
+noVol_val = [3, 6]
 
 # 'AnzahlFall' --> sinus gain
 data[0, :] = data[0, :]/data[0, :].max()  # Normierung
@@ -132,7 +132,7 @@ oscAddress[1] = "/" + synthName + "/" + hGroups[1]
 
 # Start-Values for non changeable parameter
 # (hier bin ich ein bisschen ausgerastet, SPIELEREI)
-params_nc = [[1, "noiseCO", 600, 1]]  # [hGroup, parameter-name, value, allBL_yesNo]
+params_nc = [[1, "noiseCO", 300, 1]]  # [hGroup, parameter-name, value, allBL_yesNo]
 
 msgList = []
 for j in range(len(params_nc)):
@@ -155,23 +155,19 @@ osc_process()
 
 # Ebene: Tag
 for t in range(data.shape[2]):
-    tt = 0
     msgList = []  # Liste zum Sammeln der OSC-msg (für jeden Tag neu)
 
     # Ebene: Parameter
     for p in range(data.shape[0]):
-        pp = 0
 
         if params_info[p] == 0:  # Abfrage ob Parameter für jedes BL / über alle BL summiert
 
             # Ebene: Bundesland
             for bl in range(data.shape[1]):
                 # Erzeuge OSC-message für Tag X / Parameter X / BL X
-                message = osc4py3.oscbuildparse.OSCMessage(oscAddress[0] + str(pp) + "/" + params[p],
+                message = osc4py3.oscbuildparse.OSCMessage(oscAddress[0] + str(bl) + "/" + params[p],
                                                            None, [float(data[p, bl, t])])
                 msgList.append(message)
-                tt += 1
-                pp += 1
 
         elif params_info[p] == 1:  # adjustments for 'AnzahlTodesfall' --> noise Volume + noise LFO freq
             val = data[p, 0, t] * (noLfoFreq_val[1] - noLfoFreq_val[0]) + noLfoFreq_val[0]  # Skalentransformation LFO-Freq
