@@ -12,14 +12,14 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 '''global parameter'''
-ip_YesNo = "no"  # doing interpolation?
+ip_YesNo = "yes"  # doing interpolation?
 ipRes = 3000  # interpolated resolution
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
 
 '''reading data'''
-path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
-# path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
+# path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
+path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
 df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
 data, params, BL, idx = edit(df, path)
 
@@ -88,12 +88,12 @@ if ip_YesNo == "yes":
 # scales of sound-synth. parameters
 freq_val = [100, 200]
 gain_val = [0, 1]
-duty_val = [0, 1]
+duty_val = [0.1, 0.8]
 cutoff_Pulse = [100, 3000]
-noLfoFreq_val = [0, 10]
-noVol_val = [2, 7]
-noise_CO = np.linspace(100, 700, 7)
-print(noise_CO)
+noLfoFreq_val = [0.5, 7]
+noVol_val = [0, 6]
+noise_CO_val = range(300, 1000, 100)
+print(noise_CO_val)
 # (INFO) overview of statistical data for all parameters
 for i in range(data.shape[0]):
     print(f"max{i}", np.amax(data[i, :, :]))
@@ -115,6 +115,7 @@ data[2, :] = data[2, :]/data[2, :].max()
 # 'Geschlecht' --> square duty
 data[3, :] = data[3, :]/(data[3, :]+data[4, :]+data[5, :])
 data[3, :] = np.nan_to_num(data[3, :])
+data[3, :] = duty_val[0] + (duty_val[1] - duty_val[0]) * data[3, :]
 
 '''Noice CutOff Freq'''
 array_7ages = np.zeros([7, 1, data.shape[2]])  # 7 age groups, one max value, all days
@@ -128,23 +129,23 @@ for i in range(data.shape[2]):  # all days
     age_max = np.argmax(array_7ages[:, :, i])
 
     if age_max == 0:
-        data[6, :, i] = noise_CO[0]
+        data[6, :, i] = noise_CO_val[0]
     elif age_max == 1:
-        data[6, :, i] = noise_CO[1]
+        data[6, :, i] = noise_CO_val[1]
     elif age_max == 2:
-        data[6, :, i] = noise_CO[2]
+        data[6, :, i] = noise_CO_val[2]
     elif age_max == 3:
-        data[6, :, i] = noise_CO[3]
+        data[6, :, i] = noise_CO_val[3]
     elif age_max == 4:
-        data[6, :, i] = noise_CO[4]
+        data[6, :, i] = noise_CO_val[4]
     elif age_max == 5:
-        data[6, :, i] = noise_CO[5]
+        data[6, :, i] = noise_CO_val[5]
     elif age_max == 6:
-        data[6, :, i] = noise_CO[6]
+        data[6, :, i] = noise_CO_val[6]
 
 # print(f'array_7ages {array_7ages[:, :, 1000]}')
-print(f'array_max {age_max}')
-print(f'CO Array {data[6, :, :]}')
+# print(f'array_max {age_max}')
+print(f'CO Array {data[6, :, 50]}')
 
 
 '''INFO: Mapping
@@ -178,8 +179,9 @@ hGroups = ["square", "Noise"]
 # Verknüpfung der Daten mit FAUST-Parameter
 # params = ["freq", "gain", "gate", "attack", "release"]
 # params = ["gain", "freq"]
-params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", '', '', 'NoiseCO']  # Reihenfolge beachten
-params_info = [0, 0, 1, 0, 0, 0, 0]  # type !=0 if parameter needs adjustments in triple-loop
+# params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "leer", "leer", "noiseCO"]  # Reihenfolge beachten
+params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "leer", "leer", "noiseCO"]
+params_info = [0, 0, 1, 0, 0, 0, 2]  # type !=0 if parameter needs adjustments in triple-loop
 
 data = data[:len(params), :, :]  # keep the interesting data
 
@@ -197,7 +199,7 @@ oscAddress[1] = "/" + synthName + "/" + hGroups[1]  # address for modul 'noise'
 
 # Start-Values for non changeable parameter
 # (hier bin ich ein bisschen ausgerastet, SPIELEREI)
-params_nc = [[0, "gain", 1, 0], [1, "noiseCO", 300, 1]]  # [hGroup, parameter-name, value, allBL_yesNo]
+params_nc = [[0, "gain", 1, 0]]  # [hGroup, parameter-name, value, allBL_yesNo]
 
 msgList = []
 for j in range(len(params_nc)):
@@ -232,6 +234,7 @@ for t in range(data.shape[2]):
                 # Erzeuge OSC-message für Tag X / Parameter X / BL X
                 message = osc4py3.oscbuildparse.OSCMessage(oscAddress[0] + str(bl) + "/" + params[p],
                                                            None, [float(data[p, bl, t])])
+
                 msgList.append(message)
 
         elif params_info[p] == 1:  # adjustments for 'AnzahlTodesfall' --> noise Volume + noise LFO freq
@@ -243,6 +246,12 @@ for t in range(data.shape[2]):
             val = data[p, 0, t] * (noVol_val[1] - noVol_val[0]) + noVol_val[0]  # Skalentransformation LFO-Vol
             print(val)
             message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + params[p][1],
+                                                       None, [float(val)])
+            msgList.append(message)
+
+        elif params_info[p] == 2:
+            val = data[p, 0, t]
+            message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + params[p],
                                                        None, [float(val)])
             msgList.append(message)
 
