@@ -18,13 +18,13 @@ sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running t
 
 
 '''reading data'''
-# path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis/CSV'
+# path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
 path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
 df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
 data, params, BL, idx = edit(df, path)
 
+'''data[parameters, Bundeslaender, days]'''
 data = data[:, :, 20:]  # cut out the first days because of no information
-
 
 '''INFO: parameter 
     'AnzahlFall', 'AnzahlGenesen', 'AnzahlTodesfall', 'Female', 'Unknown',
@@ -35,7 +35,6 @@ data = data[:, :, 20:]  # cut out the first days because of no information
     6'Hessen', 7'Mecklenburg-Vorpommern', 8'Niedersachsen', 9'Nordrhein-Westfalen', 
     10'Rheinland-Pfalz', 11'Saarland', 12'Sachsen', 13'Sachsen-Anhalt', 14'Schleswig-Holstein', 15'Thueringen']'''
 
-
 '''Fälle pro 100.000 Einwohner'''
 BL_ew = np.array([11100394, 13124737, 3669491, 2521893, 681202, 1847253, 6288080, 1608138, 7993608,
                   17947221, 4093903, 986887, 4071971, 2194782, 2903773, 2133378])
@@ -43,10 +42,18 @@ BL_ew = BL_ew / 100000
 
 data_norm = data
 
+'''Normalization of each state'''
 for i in range(len(BL_ew)):
     data_norm[:, i, :] = data_norm[:, i, :]/BL_ew[i]
 
 data = data_norm.copy()
+
+'''Generate a frequency array'''
+freq_BL = []
+for i in range(data.shape[1]):
+    freq_BL.append(np.sum(data[0, i]))
+
+print(f"freq_BL {freq_BL}")
 
 '''Interpolation'''
 steps = np.linspace(0, data.shape[2], num=data.shape[2], endpoint=True)
@@ -92,7 +99,7 @@ data[0, :] = cutoff_val[0] + (cutoff_val[1] - cutoff_val[0]) * data[0, :]  # lin
 # ' ' --> square freq (row 1 in data will be replaced)
 for i in range(data.shape[2]):
     # data[1, :, i] = np.array([60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210])
-    data[1, :, i] = np.linspace(freq_val[0], freq_val[1], data.shape[1])
+    data[1, :, i] = freq_BL
 
 # 'AnzahlTodesfall' --> noise Volume + noise LFO freq
 for i in range(data.shape[2]):
