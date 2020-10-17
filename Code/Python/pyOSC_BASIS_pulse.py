@@ -12,7 +12,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 '''global parameter'''
-ip_YesNo = "yes"  # doing interpolation?
+ip_YesNo = "no"  # doing interpolation?
 ipRes = 3000  # interpolated resolution
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
@@ -48,7 +48,7 @@ for i in range(len(BL_ew)):
 
 data = data_norm.copy()
 
-'''Generate a frequency array'''
+'''Generate a frequency array based on the sum of cases for each state'''
 freq_BL = []
 for i in range(data.shape[1]):
     freq_BL.append(np.sum(data[0, i]))
@@ -89,10 +89,11 @@ if ip_YesNo == "yes":
 freq_val = [100, 200]
 gain_val = [0, 1]
 duty_val = [0, 1]
-cutoff_val = [100, 3000]
+cutoff_Pulse = [100, 3000]
 noLfoFreq_val = [0, 10]
 noVol_val = [2, 7]
-
+noise_CO = np.linspace(100, 700, 7)
+print(noise_CO)
 # (INFO) overview of statistical data for all parameters
 for i in range(data.shape[0]):
     print(f"max{i}", np.amax(data[i, :, :]))
@@ -100,11 +101,10 @@ for i in range(data.shape[0]):
 
 # 'AnzahlFall' --> square cutoff-freq
 data[0, :] = data[0, :]/data[0, :].max()  # Normierung
-data[0, :] = cutoff_val[0] + (cutoff_val[1] - cutoff_val[0]) * data[0, :]  # lineare Skalentransformation
+data[0, :] = cutoff_Pulse[0] + (cutoff_Pulse[1] - cutoff_Pulse[0]) * data[0, :]  # lineare Skalentransformation
 
 # ' ' --> square freq (row 1 in data will be replaced)
 for i in range(data.shape[2]):
-    # data[1, :, i] = np.array([60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210])
     data[1, :, i] = freq_BL
 
 # 'AnzahlTodesfall' --> noise Volume + noise LFO freq
@@ -116,15 +116,43 @@ data[2, :] = data[2, :]/data[2, :].max()
 data[3, :] = data[3, :]/(data[3, :]+data[4, :]+data[5, :])
 data[3, :] = np.nan_to_num(data[3, :])
 
+'''Noice CutOff Freq'''
+array_7ages = np.zeros([7, 1, data.shape[2]])  # 7 age groups, one max value, all days
+index = range(6, 13)
+age_max = []
 
-# data = data[:4, :, :]  # keep the interesting data
+for i in range(data.shape[2]):  # all days
+    for j in range(array_7ages.shape[0]):  # all age groups
+        array_7ages[j, :, i] = np.sum(data[index[j], :, i])  # age group, one column, day
+
+    age_max = np.argmax(array_7ages[:, :, i])
+
+    if age_max == 0:
+        data[6, :, i] = noise_CO[0]
+    elif age_max == 1:
+        data[6, :, i] = noise_CO[1]
+    elif age_max == 2:
+        data[6, :, i] = noise_CO[2]
+    elif age_max == 3:
+        data[6, :, i] = noise_CO[3]
+    elif age_max == 4:
+        data[6, :, i] = noise_CO[4]
+    elif age_max == 5:
+        data[6, :, i] = noise_CO[5]
+    elif age_max == 6:
+        data[6, :, i] = noise_CO[6]
+
+# print(f'array_7ages {array_7ages[:, :, 1000]}')
+print(f'array_max {age_max}')
+print(f'CO Array {data[6, :, :]}')
+
 
 '''INFO: Mapping
 -   [0] AnzahlFall        = square cutoff-freq
 -   [1] AnzahlGenesen     = -
 -   [2] AnzahlTodesfall   = noise Volume + noise LFO freq
--       Geschlecht        = square duty
-    [3]     'Female'
+-       Geschlecht        
+    [3]     'Female'      = square duty
     [4]     'Unknown'
     [5]     'Male'
 -       Altersgruppe      = - (stereo?)
@@ -136,7 +164,6 @@ data[3, :] = np.nan_to_num(data[3, :])
     [11]    'A80+'
     [12]    'A_unknown'
 '''
-
 
 '''connecting to FAUST'''
 # OSC-Port
@@ -151,8 +178,8 @@ hGroups = ["square", "Noise"]
 # Verknüpfung der Daten mit FAUST-Parameter
 # params = ["freq", "gain", "gate", "attack", "release"]
 # params = ["gain", "freq"]
-params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty"]  # Reihenfolge beachten
-params_info = [0, 0, 1, 0]  # type !=0 if parameter needs adjustments in triple-loop
+params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", '', '', 'NoiseCO']  # Reihenfolge beachten
+params_info = [0, 0, 1, 0, 0, 0, 0]  # type !=0 if parameter needs adjustments in triple-loop
 
 data = data[:len(params), :, :]  # keep the interesting data
 
@@ -162,7 +189,6 @@ vGroups = ["BL"]
 # Start the OSC-system
 osc_startup()
 osc_udp_client('127.0.0.1', port, "TEST")  # "127.0.0.1" --> IP LocalHost
-
 
 '''writing OSC-Messages'''
 oscAddress = [''] * len(hGroups)
