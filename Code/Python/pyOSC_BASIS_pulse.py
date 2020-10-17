@@ -13,13 +13,13 @@ import matplotlib.pyplot as plt
 
 '''global parameter'''
 ip_YesNo = "yes"  # doing interpolation?
-ipRes = 1000  # interpolated resolution
+ipRes = 3000  # interpolated resolution
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
 
 '''reading data'''
 # path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis/CSV'
-path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
+path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
 df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
 data, params, BL, idx = edit(df, path)
 
@@ -31,10 +31,22 @@ data = data[:, :, 20:]  # cut out the first days because of no information
     'Male', 'A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+',
     'A_unknown']
    states:
-    ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 
-    'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 
-    'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thueringen']'''
+    [0'Baden-Wuerttemberg', 1'Bayern', 2'Berlin', 3'Brandenburg', 4'Bremen', 5'Hamburg', 
+    6'Hessen', 7'Mecklenburg-Vorpommern', 8'Niedersachsen', 9'Nordrhein-Westfalen', 
+    10'Rheinland-Pfalz', 11'Saarland', 12'Sachsen', 13'Sachsen-Anhalt', 14'Schleswig-Holstein', 15'Thueringen']'''
 
+
+'''Fälle pro 100.000 Einwohner'''
+BL_ew = np.array([11100394, 13124737, 3669491, 2521893, 681202, 1847253, 6288080, 1608138, 7993608,
+                  17947221, 4093903, 986887, 4071971, 2194782, 2903773, 2133378])
+BL_ew = BL_ew / 100000
+
+data_norm = data
+
+for i in range(len(BL_ew)):
+    data_norm[:, i, :] = data_norm[:, i, :]/BL_ew[i]
+
+data = data_norm.copy()
 
 '''Interpolation'''
 steps = np.linspace(0, data.shape[2], num=data.shape[2], endpoint=True)
@@ -92,7 +104,7 @@ data[3, :] = data[3, :]/(data[3, :]+data[4, :]+data[5, :])
 data[3, :] = np.nan_to_num(data[3, :])
 
 
-data = data[:4, :, :]  # keep the interesting data
+# data = data[:4, :, :]  # keep the interesting data
 
 '''INFO: Mapping
 -   [0] AnzahlFall        = square cutoff-freq
@@ -129,6 +141,8 @@ hGroups = ["square", "Noise"]
 params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty"]  # Reihenfolge beachten
 params_info = [0, 0, 1, 0]  # type !=0 if parameter needs adjustments in triple-loop
 
+data = data[:len(params), :, :]  # keep the interesting data
+
 # Titel der v-Groups
 vGroups = ["BL"]
 
@@ -144,7 +158,7 @@ oscAddress[1] = "/" + synthName + "/" + hGroups[1]  # address for modul 'noise'
 
 # Start-Values for non changeable parameter
 # (hier bin ich ein bisschen ausgerastet, SPIELEREI)
-params_nc = [[0, "gain", 0.7, 0], [1, "noiseCO", 300, 1]]  # [hGroup, parameter-name, value, allBL_yesNo]
+params_nc = [[0, "gain", 1, 0], [1, "noiseCO", 300, 1]]  # [hGroup, parameter-name, value, allBL_yesNo]
 
 msgList = []
 for j in range(len(params_nc)):
