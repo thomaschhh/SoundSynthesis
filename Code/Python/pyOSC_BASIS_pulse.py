@@ -18,8 +18,8 @@ sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running t
 
 
 '''reading data'''
-# path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
-path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
+path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
+# path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
 df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
 data, params, BL, idx = edit(df, path)
 
@@ -52,8 +52,9 @@ data = data_norm.copy()
 freq_BL = []
 for i in range(data.shape[1]):
     freq_BL.append(np.sum(data[0, i]))
-
-print(f"freq_BL {freq_BL}")
+print(f"freq_BL unsorted {freq_BL}")
+print(f"freq_BL sort {np.sort(freq_BL)}")
+print(f"freq_BL argsort {np.argsort(freq_BL)}")
 
 '''Interpolation'''
 steps = np.linspace(0, data.shape[2], num=data.shape[2], endpoint=True)
