@@ -6,7 +6,7 @@ noiseCO = noiseGroup(vslider("noiseCO", 100, 100, 2000, 0.1) : si.smoo);
 noiseLfoFreq = noiseGroup(vslider("noiseLfoFreq", 0, 0, 1000, 0.01) : si.smoo);
 noiseLFO = os.lf_saw(noiseLfoFreq);
 noise = noiseVol * noiseLFO * no.noise : fi.lowpass(6, noiseCO);
-maxLevel = 0.4;
+maxLevel = 1;
 
 process = 	
 (
