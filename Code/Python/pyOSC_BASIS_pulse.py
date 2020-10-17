@@ -52,9 +52,14 @@ data = data_norm.copy()
 freq_BL = []
 for i in range(data.shape[1]):
     freq_BL.append(np.sum(data[0, i]))
-print(f"freq_BL unsorted {freq_BL}")
-print(f"freq_BL sort {np.sort(freq_BL)}")
-print(f"freq_BL argsort {np.argsort(freq_BL)}")
+
+freq_BL_sort = np.sort(freq_BL)
+freq_invert = freq_BL_sort[::-1]
+
+j = 0
+for i in np.argsort(freq_BL):
+    freq_BL[i] = freq_invert[j]
+    j += 1
 
 '''Interpolation'''
 steps = np.linspace(0, data.shape[2], num=data.shape[2], endpoint=True)
