@@ -1,41 +1,43 @@
-# Script zum Verschicken von OSC-Messages via osc4py3 an das Faust-Programm: "BASIS_pulse"
+"""                             Sending OSC-Messages via osc4py3 to Faust: "BASIS_pulse"
+-------------------------------------Stucture of the dataset for one day-------------------------------------
+---------------|BadWu|Bay|Berlin|Brand|Bre|Ham|Hes|MeckVor|Nieder|NRW|RheiPfa|Saar|Sach|SachAn|SchleHo|Thuer|
+AnzahlFall-----|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+AnzahlGenesen--|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+AnzahlTodesfall|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+Female---------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+Unknown--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+Male-----------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+A00-A04--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+A05-A14--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+A15-A34--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+A35-A59--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+A80+-----------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+A_unknown------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+"""
 
 import osc4py3
 from osc4py3.as_eventloop import *
-
 import numpy as np
 import time
 import pandas as pd
-
 from edit_dataset import edit
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
 
 '''global parameter'''
 ip_YesNo = "yes"  # doing interpolation?
 ipRes = 3000  # interpolated resolution
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
-
 '''reading data'''
-# path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
-path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
+path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
+# path = '/home/nils/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
 df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
 data, params, BL, idx = edit(df, path)
 
-'''data[parameters, Bundeslaender, days]'''
-data = data[:, :, 20:]  # cut out the first days because of no information
+'''data[parameters, states, days]'''
+data = data[:, :, 20:]  # cut out the first days with no information
 
-'''INFO: parameter 
-    'AnzahlFall', 'AnzahlGenesen', 'AnzahlTodesfall', 'Female', 'Unknown',
-    'Male', 'A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+',
-    'A_unknown']
-   states:
-    [0'Baden-Wuerttemberg', 1'Bayern', 2'Berlin', 3'Brandenburg', 4'Bremen', 5'Hamburg', 
-    6'Hessen', 7'Mecklenburg-Vorpommern', 8'Niedersachsen', 9'Nordrhein-Westfalen', 
-    10'Rheinland-Pfalz', 11'Saarland', 12'Sachsen', 13'Sachsen-Anhalt', 14'Schleswig-Holstein', 15'Thueringen']'''
-
-'''Fälle pro 100.000 Einwohner'''
+'''cases per 100,000'''
 BL_ew = np.array([11100394, 13124737, 3669491, 2521893, 681202, 1847253, 6288080, 1608138, 7993608,
                   17947221, 4093903, 986887, 4071971, 2194782, 2903773, 2133378])
 BL_ew = BL_ew / 100000
@@ -73,16 +75,8 @@ for p in range(data.shape[0]):
         f2 = interp1d(steps, y, kind='cubic')
         dataIp[p, bl, :] = f2(stepsIp)
 
-# # Plotting
-# fig, axs = plt.subplots(2)
-# fig.suptitle('Vertically stacked subplots')
-# axs[0].plot(steps, data[3, 0, :], 'o')
-# axs[1].plot(stepsIp, dataIp[3, 0, :], '*')
-# plt.show()
-
 if ip_YesNo == "yes":
     data = dataIp.clip(min=0)
-
 
 '''adjust data for current FAUST-program'''
 # scales of sound-synth. parameters
@@ -93,15 +87,15 @@ cutoff_Pulse = [100, 3000]
 noLfoFreq_val = [0.5, 7]
 noVol_val = [0, 6]
 noise_CO_val = range(300, 1000, 100)
-print(noise_CO_val)
+
 # (INFO) overview of statistical data for all parameters
 for i in range(data.shape[0]):
     print(f"max{i}", np.amax(data[i, :, :]))
     # print(f"min{i}", np.amin(data[i, :, :]))
 
 # 'AnzahlFall' --> square cutoff-freq
-data[0, :] = data[0, :]/data[0, :].max()  # Normierung
-data[0, :] = cutoff_Pulse[0] + (cutoff_Pulse[1] - cutoff_Pulse[0]) * data[0, :]  # lineare Skalentransformation
+data[0, :] = data[0, :]/data[0, :].max()  # normalization
+data[0, :] = cutoff_Pulse[0] + (cutoff_Pulse[1] - cutoff_Pulse[0]) * data[0, :]  # linear scale transformation
 
 # ' ' --> square freq (row 1 in data will be replaced)
 for i in range(data.shape[2]):
@@ -110,43 +104,26 @@ for i in range(data.shape[2]):
 # 'AnzahlTodesfall' --> noise Volume + noise LFO freq
 for i in range(data.shape[2]):
     data[2, :, i] = sum(data[2, :, i])
-data[2, :] = data[2, :]/data[2, :].max()
+data[2, :] = data[2, :]/data[2, :].max()  # normalization
 
 # 'Geschlecht' --> square duty
-data[3, :] = data[3, :]/(data[3, :]+data[4, :]+data[5, :])
+data[3, :] = data[3, :]/(data[3, :]+data[4, :]+data[5, :])  # female / (female+male+unknown)
 data[3, :] = np.nan_to_num(data[3, :])
 data[3, :] = duty_val[0] + (duty_val[1] - duty_val[0]) * data[3, :]
 
-'''Noice CutOff Freq'''
-array_7ages = np.zeros([7, 1, data.shape[2]])  # 7 age groups, one max value, all days
-index = range(6, 13)
-age_max = []
-
+'''Grouping of ages'''
 for i in range(data.shape[2]):  # all days
-    for j in range(array_7ages.shape[0]):  # all age groups
-        array_7ages[j, :, i] = np.sum(data[index[j], :, i])  # age group, one column, day
+    for j in range(data.shape[1]):  # all states
+        data[6, j, i] = np.sum(data[6:8, j, i])  # sum of cases for ages 0-14
+        data[7, j, i] = data[8, j, i]  # cases for ages 15-34
+        data[8, j, i] = data[9, j, i]  # cases for ages 35-59
+        data[9, j, i] = np.sum(data[10:, j, i])  # sum of cases for ages 60+
 
-    age_max = np.argmax(array_7ages[:, :, i])
-
-    if age_max == 0:
-        data[6, :, i] = noise_CO_val[0]
-    elif age_max == 1:
-        data[6, :, i] = noise_CO_val[1]
-    elif age_max == 2:
-        data[6, :, i] = noise_CO_val[2]
-    elif age_max == 3:
-        data[6, :, i] = noise_CO_val[3]
-    elif age_max == 4:
-        data[6, :, i] = noise_CO_val[4]
-    elif age_max == 5:
-        data[6, :, i] = noise_CO_val[5]
-    elif age_max == 6:
-        data[6, :, i] = noise_CO_val[6]
-
-# print(f'array_7ages {array_7ages[:, :, 1000]}')
-# print(f'array_max {age_max}')
-print(f'CO Array {data[6, :, 50]}')
-
+sampleDay = 50
+print(f'Ages 0 - 14 | Cases -> {data[6, :, sampleDay]}')
+print(f'Ages 15 - 34 | Cases -> {data[7, :, sampleDay]}')
+print(f'Ages 35 - 59 | Cases -> {data[8, :, sampleDay]}')
+print(f'Ages 60+ | Cases -> {data[9, :, sampleDay]}')
 
 '''INFO: Mapping
 -   [0] AnzahlFall        = square cutoff-freq
@@ -156,7 +133,7 @@ print(f'CO Array {data[6, :, 50]}')
     [3]     'Female'      = square duty
     [4]     'Unknown'
     [5]     'Male'
--       Altersgruppe      = - (stereo?)
+-       Altersgruppe      = portion of waves
     [6]     'A00-A04'
     [7]     'A05-A14'
     [8]     'A15-A34'
@@ -167,25 +144,20 @@ print(f'CO Array {data[6, :, 50]}')
 '''
 
 '''connecting to FAUST'''
-# OSC-Port
-port = 5510
+port = 5510  # OSC-Port
+synthName = "BASIS_pulse"  # Synth-Name
+hGroups = ["square", "Noise"]  # title of h-Groups
 
-# Synth-Name
-synthName = "BASIS_pulse"
-
-# Titel der h-Groups
-hGroups = ["square", "Noise"]
-
-# Verknüpfung der Daten mit FAUST-Parameter
+# Linking the data with FAUST parameters
 # params = ["freq", "gain", "gate", "attack", "release"]
 # params = ["gain", "freq"]
-# params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "leer", "leer", "noiseCO"]  # Reihenfolge beachten
+# params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "leer", "leer", "noiseCO"]  # Pay attention to the order
 params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "leer", "leer", "noiseCO"]
 params_info = [0, 0, 1, 0, 0, 0, 2]  # type !=0 if parameter needs adjustments in triple-loop
 
 data = data[:len(params), :, :]  # keep the interesting data
 
-# Titel der v-Groups
+# title of v-Groups
 vGroups = ["BL"]
 
 # Start the OSC-system
@@ -212,38 +184,35 @@ for j in range(len(params_nc)):
         message = osc4py3.oscbuildparse.OSCMessage(oscAddress[params_nc[j][0]] + "/" + params_nc[j][1],
                                                    None, [float(params_nc[j][2])])
         msgList.append(message)
+
 bun = osc4py3.oscbuildparse.OSCBundle(osc4py3.oscbuildparse.OSC_IMMEDIATELY, msgList)
 osc_send(bun, "TEST")
 osc_process()
 
-
-# triple-loop zum Abfragen der Values für jeden Tag[1], Parameter[2] und jedes BL(/ alle BL)[3]
-# und zum Schreiben der OSC-messages
-
-# Ebene: Tag
+'''triple-loop to query the values for each day [1], parameter [2] and each BL(/ all BL) [3]
+and for writing OSC messages '''
+# Layer: day
 for t in range(data.shape[2]):
-    msgList = []  # Liste zum Sammeln der OSC-msg (für jeden Tag neu)
+    msgList = []  # list to collect OSC-msg (each day a new one)
 
-    # Ebene: Parameter
+    # Layer: parameter
     for p in range(data.shape[0]):
+        if params_info[p] == 0:  # Query whether parameters for each BL / summed over all BL
 
-        if params_info[p] == 0:  # Abfrage ob Parameter für jedes BL / über alle BL summiert
-
-            # Ebene: Bundesland
+            # Layer: state
             for bl in range(data.shape[1]):
-                # Erzeuge OSC-message für Tag X / Parameter X / BL X
+                # Create OSC-message for day X / Parameter X / BL X
                 message = osc4py3.oscbuildparse.OSCMessage(oscAddress[0] + str(bl) + "/" + params[p],
                                                            None, [float(data[p, bl, t])])
-
                 msgList.append(message)
 
         elif params_info[p] == 1:  # adjustments for 'AnzahlTodesfall' --> noise Volume + noise LFO freq
-            val = data[p, 0, t] * (noLfoFreq_val[1] - noLfoFreq_val[0]) + noLfoFreq_val[0]  # Skalentransformation LFO-Freq
-            # Erzeuge OSC-message für Tag X / Parameter X / BL Gesamt
+            val = data[p, 0, t] * (noLfoFreq_val[1] - noLfoFreq_val[0]) + noLfoFreq_val[0]  # scale transformation LFO-Freq
+            # Create OSC-message for day X / Parameter X / BL Gesamt
             message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + params[p][0],
                                                        None, [float(val)])
             msgList.append(message)
-            val = data[p, 0, t] * (noVol_val[1] - noVol_val[0]) + noVol_val[0]  # Skalentransformation LFO-Vol
+            val = data[p, 0, t] * (noVol_val[1] - noVol_val[0]) + noVol_val[0]  # scale transformation LFO-Vol
             print(val)
             message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + params[p][1],
                                                        None, [float(val)])
@@ -268,6 +237,6 @@ message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + "volume", None,
 osc_send(message, "TEST")
 osc_process()
 
-print("Ende der Aufzeichnung")
+print("End of the dataset")
 # osc_terminate()
 
