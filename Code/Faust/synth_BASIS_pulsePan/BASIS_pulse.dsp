@@ -15,8 +15,7 @@ process =
   //vgroup("Noise",  noiseVol*(os.lf_squarewave(1000)+0.2) * no.noise : fi.lowpass(6, noiseCO))) 
 
 	with {
-		k = j;
-  		partial(j) = vgroup("[%k]BL%j", ((os.pulsetrain(freq, duty)*gainPulse, os.osc(freq)*gainSine, os.triangle(freq)*gainTriang, os.sawtooth(freq)*gainSaw) :> fi.lowpass(2, cutoff) * gain * 1/16) * (1-checkbox("mute")) <: *(1-pan),*(pan))
+  		partial(j) = vgroup("[%2j]BL%j", ((os.pulsetrain(freq, duty)*gainPulse, os.osc(freq)*gainSine, os.triangle(freq)*gainTriang, os.sawtooth(freq)*gainSaw) :> fi.lowpass(2, cutoff) * gain * 1/16) * (1-checkbox("mute")) <: *(1-pan),*(pan))
 							//<: *(1-pan),*(pan)
 	with {
 		freq = nentry("[2]freq[style:knob]", 200, 60, 1000, 0.01) : si.smoo;
@@ -31,7 +30,5 @@ process =
 		gainSine = nentry("[6]gainSine[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
 		gainTriang = nentry("[7]gainTriang[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
 		gainSaw = nentry("[8]gainSaw[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
-		  
-		k = j+10;
 	};
 };
