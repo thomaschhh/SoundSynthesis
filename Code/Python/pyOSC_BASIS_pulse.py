@@ -1,18 +1,20 @@
 """                             Sending OSC-Messages via osc4py3 to Faust: "BASIS_pulse"
--------------------------------------Structure of the dataset for one day-------------------------------------
----------------|BadWu|Bay|Berlin|Brand|Bre|Ham|Hes|MeckPom|Nieder|NRW|RheiPfa|Saar|Sach|SachAn|SchleHo|Thuer|
-AnzahlFall-----|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-AnzahlGenesen--|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-AnzahlTodesfall|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-Female---------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-Unknown--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-Male-----------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-A00-A04--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-A05-A14--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-A15-A34--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-A35-A59--------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-A80+-----------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
-A_unknown------|  x  | x |   x  |  x  | x | x | x |   x   |   x  | x |   x   | x  | x  |  x   |   x   |  x  |
+                  ----------------------Structure of the dataset for one day----------------------------------
+                  |faustParam| BW | BY | BE | BB | HB | HH | HE | MV | NI | NW | RP | SL | SN | ST | SH | TH |
+[0]AnzahlFall-----|squaCutoff|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+------------------|   gain   |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[1]AnzahlGenesen--|----------|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[2]AnzahlTodesfall|noisVolFrq|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[3]Female---------|squareDuty|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[4]Unknown--------|squareDuty|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[5]Male-----------|squareDuty|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[6]A00-A04--------|gainTriang|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[7]A05-A14--------|gainTriang|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[8]A15-A34--------| gainSine |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[9]A35-A59--------| gainPulse|  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[10]A60-A79-------| gainSaw  |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[10]A80+----------| gainSaw  |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
+[11]A_unknown-----| gainSaw  |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |  x |
 """
 
 import osc4py3
@@ -22,6 +24,9 @@ import time
 import pandas as pd
 from edit_dataset import edit
 from scipy.interpolate import interp1d
+from pathlib import *
+import os
+
 
 '''global parameter'''
 ip_YesNo = "yes"  # doing interpolation?
@@ -29,9 +34,8 @@ ipRes = 300  # interpolated resolution
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
 '''reading data'''
-# path = '/Users/thomas/Documents/TU-Berlin/Faecher/Semester2/Sound-Synthesis/SoundSynthesis_Git/SoundSynthesis'
-path = '/home/nilsm/tubCloud/Akt/Sem6/Synth/git_thomas/SoundSynthesis/CSV'
-df = pd.read_csv(path + '/RKI_COVID19.csv')  # path + file name
+path = os.getcwd() + '/RKI_COVID19.csv'  # current working directory + file name
+df = pd.read_csv(path)
 data, params, BL, idx = edit(df, path)
 
 '''data[parameters, states, days]'''
@@ -140,32 +144,14 @@ data[8, :] = np.nan_to_num(data[8, :])
 for i in range(data.shape[2]):
     data[4, :, i] = np.linspace(0, 1, 16)
 
-
-'''INFO: Mapping
--   [0] AnzahlFall        = square cutoff-freq
--   [1] AnzahlGenesen     = -
--   [2] AnzahlTodesfall   = noise Volume + noise LFO freq
--       Geschlecht        
-    [3]     'Female'      = square duty
-    [4]     'Unknown'     = pan
-    [5]     'Male'        = pulse
--       Altersgruppe      = portion of waves
-    [6]     'A00-A04'     = sine
-    [7]     'A05-A14'     = triangle
-    [8]     'A15-A34'     = sawtooth
-    [9]     'A35-A59'     = gain
-    [10]    'A60-A79'
-    [11]    'A80+'
-    [12]    'A_unknown'
-'''
-
 '''connecting to FAUST'''
 port = 5510  # OSC-Port
 synthName = "BASIS_pulse"  # Synth-Name
 hGroups = ["square", "Noise"]  # title of h-Groups
 
 # Linking the data with FAUST parameters
-params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "pan", "gainTriang", "gainSine", "gainPulse", "gainSaw", "gain"]  # Pay attention to the order
+params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "pan", "gainTriang", "gainSine", "gainPulse",
+          "gainSaw", "gain"]  # Pay attention to the order
 params_info = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0] # type !=0 if parameter needs adjustments in triple-loop
 
 data = data[:len(params), :, :]  # keep the interesting data
@@ -220,7 +206,7 @@ for t in range(data.shape[2]):
 
         elif params_info[p] == 1:  # adjustments for 'AnzahlTodesfall' --> noise Volume + noise LFO freq
             val = data[p, 0, t] * (noLfoFreq_val[1] - noLfoFreq_val[0]) + noLfoFreq_val[0]  # scale transformation LFO-Freq
-            # Create OSC-message for day X / Parameter X / BL Gesamt
+            # Create OSC-message for day X / Parameter X / BL total
             message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + params[p][0],
                                                        None, [float(val)])
             msgList.append(message)
