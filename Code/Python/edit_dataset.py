@@ -91,7 +91,7 @@ def edit(dfr, pth):
         df_new.drop(columns=['Meldedatum'], axis=1, inplace=True)
 
         '''Write a new csv file'''
-        df_new.to_csv(f'{pth}/{states}.csv')
+        # df_new.to_csv(f'{pth}/{states}.csv')
 
         # Eingriff
         bl.append(states)
