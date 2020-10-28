@@ -24,22 +24,36 @@ import time
 import pandas as pd
 from edit_dataset import edit
 from scipy.interpolate import interp1d
+import requests
 from pathlib import *
 import os
 
+'''corona activities'''
+activities = dict([('2020-02-10', "das und das und dies"),
+                   ('2020-09-23', "Die Corona-Warn-App wurde in den 100 Tagen, seitdem sie verfügbar ist, über 18 Millionen Mal heruntergeladen."),
+                   ('2020-01-28', "Das Coronavirus hat Deutschland erreicht. Ein Mann aus dem Landkreis Starnberg in Bayern hat sich infiziert."),
+                   ('2020-01-31', "Rund 100 Personen werden voraussichtlich am 1. Februar 2020 aus Wuhan nach \nDeutschland zurückkehren. Die Rückkehrer sind symptomfrei gestartet."),
+                   ('2020-02-04', "Die Gesundheitsminister der Europäischen Union und der G7-Staaten wollen stärker \nzusammenarbeiten, um eine Ausbreitung des Coronavirus zu verhindern.")
+                  ])
 
 '''global parameter'''
 ip_YesNo = "yes"  # doing interpolation?
-ipRes = 300  # interpolated resolution
+ipRes_mul = 11  # interpolated resolution, just integer
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
 '''reading data'''
+url = 'https://www.arcgis.com/sharing/rest/content/items/f10774f1c63e40168479a1feb6c7ca74/data'
+r = requests.get(url, allow_redirects=True)
+open('RKI_COVID19.csv', 'wb').write(r.content)
+
 path = os.getcwd() + '/RKI_COVID19.csv'  # current working directory + file name
 df = pd.read_csv(path)
 data, params, BL, idx = edit(df, path)
 
 '''data[parameters, states, days]'''
-data = data[:, :, 20:]  # cut out the first days with no information
+data = data[:, :, :]  # cut out the first days with no information
+idx = idx[:]
+leng_data = data.shape[2]
 
 '''cases per 100,000'''
 BL_ew = np.array([11100394, 13124737, 3669491, 2521893, 681202, 1847253, 6288080, 1608138, 7993608,
@@ -67,6 +81,7 @@ for i in np.argsort(freq_BL):
     j += 1
 
 '''Interpolation'''
+ipRes = round(ipRes_mul * leng_data)
 steps = np.linspace(0, data.shape[2], num=data.shape[2], endpoint=True)
 stepsIp = np.linspace(0, data.shape[2], num=ipRes, endpoint=True)
 
@@ -82,14 +97,16 @@ if ip_YesNo == "yes":
     data = dataIp.clip(min=0)
 
 '''adjust data for current FAUST-program'''
+np.seterr(divide='ignore', invalid='ignore')
 # scales of sound-synth. parameters
+vol_val = 1
 freq_val = [100, 200]
 gain_val = [0, 5]
 duty_val = [0.1, 0.8]
 cutoff_Pulse_val = [0, 3000]
 noLfoFreq_val = [0.5, 7]
-noVol_val = [0, 6]
-noise_CO_val = range(300, 1000, 100)
+noVol_val = [0, 2]
+noise_CO_val = 250
 
 # ' ' --> square freq (row 1 in data will be replaced)
 for i in range(data.shape[2]):
@@ -147,12 +164,12 @@ for i in range(data.shape[2]):
 '''connecting to FAUST'''
 port = 5510  # OSC-Port
 synthName = "BASIS_pulse"  # Synth-Name
-hGroups = ["square", "Noise"]  # title of h-Groups
+hGroups = ["Channels", "Noise"]  # title of h-Groups
 
 # Linking the data with FAUST parameters
 params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "pan", "gainTriang", "gainSine", "gainPulse",
           "gainSaw", "gain"]  # Pay attention to the order
-params_info = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0] # type !=0 if parameter needs adjustments in triple-loop
+params_info = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]  # type !=0 if parameter needs adjustments in triple-loop
 
 data = data[:len(params), :, :]  # keep the interesting data
 
@@ -165,11 +182,11 @@ osc_udp_client('127.0.0.1', port, "aclientname")  # "127.0.0.1" --> IP LocalHost
 
 '''writing OSC-Messages'''
 oscAddress = [''] * len(hGroups)
-oscAddress[0] = "/" + synthName + "/" + hGroups[0] + "/" + vGroups[0]  # address for modul 'square'
-oscAddress[1] = "/" + synthName + "/" + hGroups[1]  # address for modul 'noise'
+oscAddress[0] = "/" + synthName + "/" + hGroups[0] + "/" + vGroups[0]  # address for modul 'Channels'
+oscAddress[1] = "/" + synthName + "/" + hGroups[1]  # address for modul 'Noise'
 
 # Start-Values for non changeable parameter
-params_nc = [[1, "volume", 0.5, 1]]  # [hGroup, parameter-name, value, allBL_yesNo]
+params_nc = [[1, "Volume", vol_val, 1], [1, "noiseCO", noise_CO_val, 1]]  # [hGroup, parameter-name, value, allBL_yesNo]
 
 msgList = []
 for j in range(len(params_nc)):
@@ -189,6 +206,7 @@ osc_process()
 
 '''triple-loop to query the values for each day [1], parameter [2] and each BL(/ all BL) [3]
 and for writing OSC messages '''
+z = 0  # var for printing dates
 # Layer: day
 for t in range(data.shape[2]):
     msgList = []  # list to collect OSC-msg (each day a new one)
@@ -228,17 +246,26 @@ for t in range(data.shape[2]):
     bun = osc4py3.oscbuildparse.OSCBundle(osc4py3.oscbuildparse.OSC_IMMEDIATELY, msgList[pointer:])
     osc_send(bun, "aclientname")
     osc_process()
-    # print(idx[l])
-    print(t)  # counter interpolation
+
+    # printing dates und activities
+    if t % ipRes_mul == 0:
+        date = idx[z].strftime('%Y-%m-%d')
+        print(date)
+        if date in activities:
+            print(activities[date])
+        z += 1
+
     time.sleep(sleepTime)
 
 # set the main-volume to zero
-sleepTime_end = 0.5
-for i in np.linspace(1, 0, 20):
-    message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + "volume", None, [float(i)])
+print("End of the dataset")
+sleepTime_end = 0.1
+for i in np.logspace(vol_val, 0, 80):
+    print(i)
+    message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + "Volume", None, [float(i/10-1/10)])
     osc_send(message, "aclientname")
     osc_process()
     time.sleep(sleepTime_end)
 
-print("End of the dataset")
+
 
