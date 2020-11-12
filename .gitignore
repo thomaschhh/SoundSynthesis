@@ -1,4 +1,10 @@
 # Folder view configuration files
 .DS_Store
 
+# Faust files
+faust.T4rSHJ/
+faust.uc1m4j/
+BASIS_pulse.dsp.json
 
+# Compiled Python files
+*.pyc
