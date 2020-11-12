@@ -1,12 +1,12 @@
 import("stdfaust.lib");
 
 noiseGroup(x) = hgroup("[0]Noise", x);
-noiseVol = noiseGroup(vslider("noiseVol", 0, 0, 2, 0.001) : si.smoo);
-noiseCO = noiseGroup(vslider("noiseCO", 100, 100, 2000, 0.1) : si.smoo);
-noiseLfoFreq = noiseGroup(vslider("noiseLfoFreq", 0, 0, 7, 0.01) : si.smoo);
+noiseVol = noiseGroup(hslider("noiseVol", 0, 0, 2, 0.001) : si.smoo);
+noiseCO = noiseGroup(hslider("noiseCO", 100, 100, 2000, 0.1) : si.smoo);
+noiseLfoFreq = noiseGroup(hslider("noiseLfoFreq", 0, 0, 7, 0.01) : si.smoo);
 noiseLFO = os.lf_saw(noiseLfoFreq);
 noise = noiseVol * noiseLFO * no.noise : fi.lowpass(4, noiseCO);
-masterVol = noiseGroup(vslider("Volume", 0, 0, 1, 0.01));
+masterVol = noiseGroup(hslider("Volume", 0, 0, 1, 0.01))*2 : si.smoo;
 
 process = 	
 (hgroup("Channels", par(i, 16, partial(i))), (noise <: _,_) :> *(masterVol),*(masterVol))

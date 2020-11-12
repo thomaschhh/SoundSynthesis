@@ -127,7 +127,7 @@ if ip_YesNo == "yes":
 '''adjust data for current FAUST-program'''
 np.seterr(divide='ignore', invalid='ignore')
 # scales of sound-synth. parameters
-vol_val = 1
+vol_val = 0.5
 freq_val = [100, 200]
 gain_val = [0, 5]
 duty_val = [0.1, 0.8]
@@ -289,7 +289,6 @@ for t in range(data.shape[2]):
 print("End of the dataset")
 sleepTime_end = 0.1
 for i in np.logspace(vol_val, 0, 80):
-    print(i)
     message = osc4py3.oscbuildparse.OSCMessage(oscAddress[1] + "/" + "Volume", None, [float(i/10-1/10)])
     osc_send(message, "aclientname")
     osc_process()
