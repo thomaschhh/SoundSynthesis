@@ -29,43 +29,27 @@ from pathlib import *
 import os
 
 '''corona activities'''
-activities = dict([('2020-09-23', "Die Corona-Warn-App wurde in den 100 Tagen, seitdem sie verfügbar ist, über 18 Millionen Mal heruntergeladen."),
-                   ('2020-01-28', "Das Coronavirus hat Deutschland erreicht. Ein Mann aus dem Landkreis Starnberg in Bayern hat sich infiziert."),
-                   ('2020-01-31', "Rund 100 Personen werden voraussichtlich am 1. Februar 2020 aus Wuhan nach \nDeutschland zurückkehren. Die Rückkehrer sind symptomfrei gestartet."),
-                   ('2020-02-04', "Die Gesundheitsminister der Europäischen Union und der G7-Staaten wollen stärker \nzusammenarbeiten, um eine Ausbreitung des Coronavirus zu verhindern."),
-                   ('2020-01-15', 'The WHO registers an infection in Thailand, the first outside China.'),
-                   ('2020-01-24', 'The novel virus reaches Europe (France).'),
-                   ('2020-03-02', 'Saxony and Thuringia report the first cases. There are infections in about 60 countries.'),
-                   ('2020-03-06', 'In Germany there is an increasing number of hamster purchases.'),
-                   ('2020-03-10', 'All federal states are affected.'),
-                   ('2020-03-11', 'The WHO declares a pandemic.'),
-                   ('2020-03-16', 'In most federal states, schools and daycare centers are already closed, with others to follow.'),
-                   ('2020-03-22', 'Federal and state governments agree on strict exit and contact restrictions.'),
+activities = dict([('2020-02-27', 'High numbers of COVID-19 infections in Heinsberg.'),
+                   ('2020-03-11', 'The WHO declares a pandemic. \nAll federal states in Germany are affected.'),
+                   ('2020-03-16', 'In most federal states, schools and daycare centers are already closed.'),
+                   ('2020-03-22', 'Federal and state governments agree on a shutdown and contact restrictions.'),
                    ('2020-04-01', 'The nationwide contact restrictions are extended until April 19.'),
-                   ('2020-04-20', 'In Germany, the first cautious relaxation of the corona protection measures come into force.'),
-                   ('2020-04-27', 'In all German federal states a mouthguard obligation applies meanwhile, usually for purchases as well as in bus and course, partly only in the ÖPNV.'),
-                   ('2020-05-02', 'For the first time in Central Germany, hundreds of people in several places simultaneously demonstrate against the restrictions and regulations for the containment of the virus.'),
+                   ('2020-04-20', 'The first cautious relaxation of the corona protection measures come into force.'),
+                   ('2020-04-27', 'Mouthguard obligation in stores as well as in public transport.'),
                    ('2020-05-04', 'Saxony-Anhalt is the first federal state to relax contact restrictions.'),
-                   ('2020-05-09', 'In several German cities thousands of people demonstrate against the contact restrictions and hygiene requirements.'),
-                   ('2020-05-18', 'After an approximately eight-week compulsory Corona break, regular operation of the daycare centers in Saxony and Thuringia will begin.'),
-                   ('2020-06-01', 'Many people use the Whitsun weekend for excursions.'),
+                   ('2020-05-09', 'Thousands of people demonstrate against the contact restrictions and hygiene requirements.'),
                    ('2020-06-13', 'Thuringia is the first state to abolish contact restrictions.'),
-                   ('2020-06-16', 'The Corona-Warn-App for better tracing of infection chains starts in Germany.'),
-                   ('2020-06-23', 'North Rhine-Westphalia imposes a new lockdown in the district of Gütersloh.'),
-                   ('2020-07-03', 'The EU Commission allows the use of the drug Remdesivir for the lung disease Covid-19 under certain conditions.'),
-                   ('2020-07-24', 'The federal and state health ministers agree on free testing for returning air travelers.'),
-                   ('2020-08-01', 'For the first time since May, more than 1,000 new infections per day are registered in Germany. In Berlin, about 20,000 people are demonstrating against the policies of the German government in the pandemic. The participants disregard all hygiene regulations.'),
+                   ('2020-06-16', 'The Corona-Warn-App starts in Germany.'),
+                   ('2020-08-01', 'More than 1,000 new infections per day. \nIn Berlin, about 20,000 demonstrating people disregard hygiene regulations.'),
                    ('2020-08-03', 'After Hamburg, the federal state of North Rhine-Westphalia also wants to introduce compulsory mouthguards at schools when school starts.'),
-                   ('2020-08-08', 'Travelers returning from Corona risk areas are now required to be tested for the virus.'),
                    ('2020-08-17', 'Chancellor Merkel considers further relaxation to be impossible.'),
-                   ('2020-08-29', 'In Berlin, a good 38,000 people demonstrate against measures to contain the coronavirus in Germany.'),
-                   ('2020-08-31', 'In Thuringia and Saxony, school starts again after the summer vacations - under strict hygiene conditions, but without compulsory masks.'),
-                   ('2020-09-15', 'The state government in Saxony-Anhalt decides on further relaxation of protective measures. Nationwide, 20 percent of seats may now be occupied at events with more than 1,000 spectators.'),
-                   ('2020-10-14', 'Federal and state governments agree on new common containment rules. In regions with rapidly increasing corona numbers, private celebrations will be limited to a maximum of ten participants and two households. In the catering trade there will be a closing hour at 11pm.')
+                   ('2020-08-29', 'In Berlin, approx. 38,000 people demonstrate against measures to contain the coronavirus in Germany.'),
+                   ('2020-09-15', 'Nationwide, 20 percent of seats may now be occupied at events with more than 1,000 spectators.'),
+                   ('2020-10-14', 'Private celebrations will be limited to a maximum of ten participants and two households. \nIn the catering trade there will be a closing hour at 11pm.')
                    ])
 
 '''global parameter'''
-ip_YesNo = "yes"  # doing interpolation?
+ip_YesNo = "yes"  # doing interpolation? "yes" or "no"
 ipRes_mul = 11  # interpolated resolution, just integer
 sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
 
@@ -79,8 +63,9 @@ df = pd.read_csv(path)
 data, params, BL, idx = edit(df, path)
 
 '''data[parameters, states, days]'''
-data = data[:, :, :]  # cut out the first days with no information
-idx = idx[:]
+start_day = 15
+data = data[:, :, start_day:]  # cut out the first days with no information
+idx = idx[start_day:]
 leng_data = data.shape[2]
 
 '''cases per 100,000'''
