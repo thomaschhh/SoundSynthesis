@@ -7,4 +7,5 @@ faust.uc1m4j/
 BASIS_pulse.dsp.json
 
 # Compiled Python files
-*.pyc
+origin/master/**/*.pyc
+
