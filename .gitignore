@@ -8,4 +8,10 @@ BASIS_pulse.dsp.json
 
 # Compiled Python files
 *.pyc
+*.idea
 
+
+# Faust files
+*.cpp
+*.json
+*.svg
