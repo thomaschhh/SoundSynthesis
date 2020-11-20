@@ -116,7 +116,7 @@ if ip_YesNo == "yes":
 '''adjust data for current FAUST-program'''
 np.seterr(divide='ignore', invalid='ignore')
 # scales of sound-synth. parameters
-vol_val = 0.5
+vol_val = 1
 freq_val = [100, 200]
 gain_val = [0, 5]
 duty_val = [0.1, 0.8]
