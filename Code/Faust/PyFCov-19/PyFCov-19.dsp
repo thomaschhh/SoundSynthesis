@@ -18,9 +18,9 @@ process =
 		duty = nentry("[2]duty[style:knob]", 0.5, 0.001, 0.999, 0.001) : si.smoo;
 		cutoff = vslider("[4]cutoff", 500, 60, 3000, 1) : si.smoo;
 		pan = nentry("[1]pan", 0.5, 0.0, 1, 0.001) : si.smoo;
-		gainPulse = nentry("[7]gainPulse[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
-		gainSine = nentry("[6]gainSine[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
-		gainTriang = nentry("[5]gainTriang[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
+		gainPulse = nentry("[7]gainPul[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
+		gainSine = nentry("[6]gainSin[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
+		gainTriang = nentry("[5]gainTri[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
 		gainSaw = nentry("[8]gainSaw[style:knob]",0.5 ,0 ,1 , 0.001) : si.smoo;
 	};
 };
