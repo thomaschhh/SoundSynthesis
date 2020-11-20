@@ -184,7 +184,7 @@ synthName = "PyFCov-19"  # Synth-Name --> Faust
 hGroups = ["Channels", "Noise"]  # title of h-Groups
 
 # Linking the data with FAUST parameters
-params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "pan", "gainTriang", "gainSine", "gainPulse",
+params = ["cutoff", "freq", ["noiseLfoFreq", "noiseVol"], "duty", "pan", "gainTri", "gainSin", "gainPul",
           "gainSaw", "gain"]  # Pay attention to the order
 params_info = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]  # type !=0 if parameter needs adjustments in triple-loop
 
