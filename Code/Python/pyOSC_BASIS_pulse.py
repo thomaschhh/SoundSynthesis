@@ -29,29 +29,33 @@ from pathlib import *
 import os
 
 '''corona activities'''
-activities = dict([('2020-02-27', 'High numbers of COVID-19 infections in Heinsberg.'),
-                   ('2020-03-11', 'The WHO declares a pandemic. \nAll federal states in Germany are affected.'),
+activities = dict([('2020-01-03', 'First case of RKI dataset.'),
+                   ('2020-01-10', 'Private celebrations: limited max. 10 participants / two households. \nIn the catering trade there will be a closing hour at 11pm.'),
+                   ('2020-01-19','Private celebrations: limited max. 10 participants / two households. \nIn the catering trade there will be a closing hour at 11pm.'),
+                   ('2020-02-27', 'High numbers of COVID-19 infections in Heinsberg.'),
+                   ('2020-03-11', 'The WHO declares a pandemic. All federal states in Germany are affected.'),
                    ('2020-03-16', 'In most federal states, schools and daycare centers are already closed.'),
                    ('2020-03-22', 'Federal and state governments agree on a shutdown and contact restrictions.'),
                    ('2020-04-01', 'The nationwide contact restrictions are extended until April 19.'),
                    ('2020-04-20', 'The first cautious relaxation of the corona protection measures come into force.'),
                    ('2020-04-27', 'Mouthguard obligation in stores as well as in public transport.'),
                    ('2020-05-04', 'Saxony-Anhalt is the first federal state to relax contact restrictions.'),
-                   ('2020-05-09', 'Thousands of people demonstrate against the contact restrictions and hygiene requirements.'),
+                   ('2020-05-09', 'Thousands of people demonstrate against the contact restrictions / hygiene requirements.'),
                    ('2020-06-13', 'Thuringia is the first state to abolish contact restrictions.'),
-                   ('2020-06-16', 'The Corona-Warn-App starts in Germany.'),
-                   ('2020-08-01', 'More than 1,000 new infections per day. \nIn Berlin, about 20,000 demonstrating people disregard hygiene regulations.'),
-                   ('2020-08-03', 'After Hamburg, the federal state of North Rhine-Westphalia also wants to introduce compulsory mouthguards at schools when school starts.'),
+                   ('2020-06-16', 'The Corona-Warn-App launches in Germany.'),
+                   ('2020-08-01', '> 1,000 new infections/day. In Berlin, approx. 20,000 demonstrating people disregard hygiene regulations.'),
+                   ('2020-08-03', 'After Hamburg, North Rhine-Westphalia also wants to introduce compulsory mouthguards at schools.'),
                    ('2020-08-17', 'Chancellor Merkel considers further relaxation to be impossible.'),
-                   ('2020-08-29', 'In Berlin, approx. 38,000 people demonstrate against measures to contain the coronavirus in Germany.'),
+                   ('2020-08-29', 'In Berlin, approx. 38,000 people demonstrate against COVID-19 measures.'),
                    ('2020-09-15', 'Nationwide, 20 percent of seats may now be occupied at events with more than 1,000 spectators.'),
-                   ('2020-10-14', 'Private celebrations will be limited to a maximum of ten participants and two households. \nIn the catering trade there will be a closing hour at 11pm.')
+                   ('2020-10-14', 'Private celebrations: limited max. 10 participants / two households. \nIn the catering trade there will be a closing hour at 11pm.'),
+                   ('2020-11-02', 'Lockdown light until further notice.')
                    ])
 
 '''global parameter'''
 ip_YesNo = "yes"  # doing interpolation? "yes" or "no"
-ipRes_mul = 11  # interpolated resolution, just integer
-sleepTime = 0.1  # time (in sec) between the steps: numb * sleepTime = running time
+ipRes_mul = 10  # interpolated resolution, just integer
+sleepTime = 0.11  # time (in sec) between the steps: numb * sleepTime = running time
 
 '''reading data'''
 url = 'https://www.arcgis.com/sharing/rest/content/items/f10774f1c63e40168479a1feb6c7ca74/data'
@@ -63,7 +67,7 @@ df = pd.read_csv(path)
 data, params, BL, idx = edit(df, path)
 
 '''data[parameters, states, days]'''
-start_day = 15
+start_day = 0
 data = data[:, :, start_day:]  # cut out the first days with no information
 idx = idx[start_day:]
 leng_data = data.shape[2]
